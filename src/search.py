@@ -144,9 +144,9 @@ class PipelineSearch:
 
         ##DATA_PREP
         # self._Scaling_Features()
-        self.best_classifier = {}
-        self.X_train_smote = np.zeros(shape=(2636, 6))
-        self.y_train_smote = np.zeros(shape=(2636,))
+        # self.best_classifier = {}
+        # self.X_train_smote = np.zeros(shape=(2636, 6))
+        # self.y_train_smote = np.zeros(shape=(2636,))
         # self._SMOTE()
         # self._SMOTE_Boarder()
         # self._SMOTE_SVM()
@@ -154,12 +154,12 @@ class PipelineSearch:
         # IMPLEMENT: '''SMOTEENN'''
         # self._ANASYN()
         # self._Scaling_Features()
-        self.feat_scores = pd.DataFrame()
+        # self.feat_scores = pd.DataFrame()
         # self.select_KBest()
-        self.boruta_selection()
+        # self.boruta_selection()
 
         ##MODEL
-        self.scoring_metric = make_scorer(f1_score)  #'recall' # make_scorer(f1_score)
+        # self.scoring_metric = make_scorer(f1_score)  #'recall' # make_scorer(f1_score)
         # self._ADABoost()
         self._GSCV_REG()
 
@@ -212,7 +212,11 @@ class PipelineSearch:
         try:
             file_path = PurePath(directory).joinpath(file_name)
             self.processed_data = pd.read_csv(file_path)
-            logging.info("Imported processed data from {}".format(file_path))
+            logging.info(
+                "Imported processed data from {} with shape {}.".format(
+                    file_path, self.processed_data.shape
+                )
+            )
             return True
         except FileNotFoundError:
             logging.info(
