@@ -11,10 +11,11 @@ import numpy as np
 from datetime import date
 from datetime import datetime
 from sklearn.model_selection import train_test_split
-#from data_loader import Dataset
-#from data_preprocessing import Processor
-#from feature_engineering import FeatureEngineer
-#from model import grid_search_MLP, assess_generalization_auprc, grid_search_RF
+
+# from data_loader import Dataset
+# from data_preprocessing import Processor
+# from feature_engineering import FeatureEngineer
+# from model import grid_search_MLP, assess_generalization_auprc, grid_search_RF
 from sklearn.linear_model import SGDClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsRegressor
@@ -34,7 +35,7 @@ from sklearn.metrics import precision_score, recall_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import roc_curve
 
-#from imblearn.pipeline import Pipeline
+# from imblearn.pipeline import Pipeline
 
 from xgboost import XGBClassifier
 from xgboost import XGBRegressor
@@ -51,7 +52,8 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.feature_selection import RFE
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, auc, roc_auc_score
-#import scikitplot as skplt
+
+# import scikitplot as skplt
 from sklearn import metrics
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_score, recall_score, accuracy_score
@@ -75,29 +77,37 @@ from sklearn.metrics import average_precision_score
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsClassifier
+
 # import graphviz
 # import pydotplus
 from IPython.display import Image
 from sklearn.tree import export_graphviz
-#from sklearn.externals.six import StringIO
+
+# from sklearn.externals.six import StringIO
 from scipy.stats import mannwhitneyu
 from sklearn.metrics import classification_report
 import re
 from math import nan
 
 # import torch
-#import torchvision as tv
-#import torchvision.transforms as transforms
-#import torch.nn as nn
-#import torch.nn.functional as F
-#from torch.autograd import Variable
-from sklearn.ensemble import GradientBoostingRegressor, AdaBoostRegressor, RandomForestRegressor
-#from gplearn.genetic import SymbolicRegressor
-#from gplearn.genetic import SymbolicClassifier#
+# import torchvision as tv
+# import torchvision.transforms as transforms
+# import torch.nn as nn
+# import torch.nn.functional as F
+# from torch.autograd import Variable
+from sklearn.ensemble import (
+    GradientBoostingRegressor,
+    AdaBoostRegressor,
+    RandomForestRegressor,
+)
+
+# from gplearn.genetic import SymbolicRegressor
+# from gplearn.genetic import SymbolicClassifier#
 from sklearn.neighbors import KNeighborsClassifier
 import math
-#import featuretools as ft
-#from torchvision.utils import save_image
+
+# import featuretools as ft
+# from torchvision.utils import save_image
 
 # configure the logging
 LOGGER = logging.getLogger("LOGGER")
@@ -106,51 +116,47 @@ LOGGER = logging.getLogger("LOGGER")
 
 
 class PipelineSearch:
-
-    def __init__(self, file_path, target, task_type, results_filepath, test_size=0.30, seed=None):
+    def __init__(
+        self, file_path, target, task_type, results_filepath, test_size=0.30, seed=None
+    ):
 
         self.target = target
         self.task_type = task_type
         self.raw_data = self._pick_features(pd.read_excel(file_path))
-
         self.results_filepath = results_filepath
-
         self.seed = seed if seed is not None else SEED
         self.test_size = test_size
 
         ##PRE-PROCESS
-        self.preprocessing()  #-> Fraction split needs to be set here
-        #self._binning()
-        #self.calc_correlations()
+        self.preprocessing()
 
         ##SPLIT
         self.x_train = pd.DataFrame()
         self.y_train = pd.DataFrame()
         self.x_test = pd.DataFrame()
         self.y_test = pd.DataFrame()
-        #self._split_data()
+        # self._split_data()
 
         ##DATA_PREP
-        #self._Scaling_Features()
+        # self._Scaling_Features()
         self.best_classifier = {}
         self.X_train_smote = np.zeros(shape=(2636, 6))
         self.y_train_smote = np.zeros(shape=(2636,))
-        #self._SMOTE()
-        #self._SMOTE_Boarder()
-        #self._SMOTE_SVM()
-        #self._SMOTETomek()
-        #IMPLEMENT: '''SMOTEENN'''
-        #self._ANASYN()
-        #self._Scaling_Features()
+        # self._SMOTE()
+        # self._SMOTE_Boarder()
+        # self._SMOTE_SVM()
+        # self._SMOTETomek()
+        # IMPLEMENT: '''SMOTEENN'''
+        # self._ANASYN()
+        # self._Scaling_Features()
         self.feat_scores = pd.DataFrame()
-        #self.select_KBest()
+        # self.select_KBest()
         self.boruta_selection()
 
         ##MODEL
-        self.scoring_metric = make_scorer(f1_score)#'recall' # make_scorer(f1_score)
-        #self._ADABoost()
+        self.scoring_metric = make_scorer(f1_score)  #'recall' # make_scorer(f1_score)
+        # self._ADABoost()
         self._GSCV_REG()
-        self._algorithm_opt()
 
     def _pick_features(self, df):
         """
@@ -162,7 +168,11 @@ class PipelineSearch:
         feature_list_extended = FEATURE_LIST.copy()
         feature_list_extended.append(self.target)
         df = df.filter(items=feature_list_extended)
-        LOGGER.info("The imported file has shape {} and contains following columns {}.".format(df.shape, df.columns.values))
+        LOGGER.info(
+            "The imported file has shape {} and contains following columns {}.".format(
+                df.shape, df.columns.values
+            )
+        )
         return df
 
     def preprocessing(self):
@@ -185,72 +195,112 @@ class PipelineSearch:
 
         # TODO: Marius validate this part, it seems very odd to me how you remove nan's
         # filter out all not SOMA patients
-        temp = self.raw_data.loc[self.raw_data['SOMA            1=Y 0=N'] == 0]
+        temp = self.raw_data.loc[self.raw_data["SOMA            1=Y 0=N"] == 0]
         # replace all nans with 0
         temp = temp.replace(np.nan, 0)
-        self.raw_data = self.raw_data.loc[self.raw_data['SOMA            1=Y 0=N'] == 1]
+        self.raw_data = self.raw_data.loc[self.raw_data["SOMA            1=Y 0=N"] == 1]
         self.raw_data = self.raw_data.append(temp)
         self.raw_data = self.raw_data.dropna()
 
-        self.raw_data['Gender'] = self.raw_data['Gender'].apply(lambda x: str(x).lower().strip())
-        self.raw_data['Primary Tumour'] = self.raw_data['Primary Tumour'].apply(lambda x: str(x).lower().strip())
-        self.raw_data['First Met Organ Site'] = self.raw_data['First Met Organ Site'].apply(lambda x: str(x).lower().strip())
+        self.raw_data["Gender"] = self.raw_data["Gender"].apply(
+            lambda x: str(x).lower().strip()
+        )
+        self.raw_data["Primary Tumour"] = self.raw_data["Primary Tumour"].apply(
+            lambda x: str(x).lower().strip()
+        )
+        self.raw_data["First Met Organ Site"] = self.raw_data[
+            "First Met Organ Site"
+        ].apply(lambda x: str(x).lower().strip())
 
         # TODO: Marius: I think with your implementation you don't drop the original column, please check what is valid
         # one hot encode categorical columns and drop the original column
-        self.raw_data = pd.concat([self.raw_data, pd.get_dummies(self.raw_data['Primary Tumour'], prefix ='Primary Tumour')], axis=1)
-        self.raw_data = pd.concat([self.raw_data, pd.get_dummies(self.raw_data['Gender'], prefix ='Gender')], axis=1)
-        self.raw_data = pd.concat([self.raw_data, pd.get_dummies(self.raw_data['First Met Organ Site'], prefix='First Met Organ Site')], axis=1)
-        LOGGER.info("After one-hot-encoding following columns are present {}".format(self.raw_data.columns.values))
+        self.raw_data = pd.concat(
+            [
+                self.raw_data,
+                pd.get_dummies(
+                    self.raw_data["Primary Tumour"], prefix="Primary Tumour"
+                ),
+            ],
+            axis=1,
+        )
+        self.raw_data = pd.concat(
+            [self.raw_data, pd.get_dummies(self.raw_data["Gender"], prefix="Gender")],
+            axis=1,
+        )
+        self.raw_data = pd.concat(
+            [
+                self.raw_data,
+                pd.get_dummies(
+                    self.raw_data["First Met Organ Site"], prefix="First Met Organ Site"
+                ),
+            ],
+            axis=1,
+        )
+        LOGGER.info(
+            "After one-hot-encoding following columns are present {}".format(
+                self.raw_data.columns.values
+            )
+        )
 
-        self.raw_data['age'] = self.raw_data['DoB'].apply(calculate_age)
+        self.raw_data["age"] = self.raw_data["DoB"].apply(calculate_age)
 
         # ahhhh there we go with dropping the columns - why do we drop gender_m?
-        self.raw_data = self.raw_data.drop(columns=['DoB', 'Gender', 'Gender_m', 'Primary Tumour', 'First Met Organ Site'])
+        self.raw_data = self.raw_data.drop(
+            columns=[
+                "DoB",
+                "Gender",
+                "Gender_m",
+                "Primary Tumour",
+                "First Met Organ Site",
+            ]
+        )
 
         # Remove rows with NaN values
         self.raw_data = self.raw_data.dropna()
-        LOGGER.info('Dataframe after preprocessing has shape {}. {} Patients were removed from dataset.'.format(self.raw_data.shape, (num_valid_entries-self.raw_data.shape[0])))
+        LOGGER.info(
+            "Dataframe after preprocessing has shape {}. {} Patients were removed from dataset.".format(
+                self.raw_data.shape, (num_valid_entries - self.raw_data.shape[0])
+            )
+        )
 
         file_name = "preprocessed_data_{}_target.csv".format(self.target)
         directory = "input"
         df_to_csv(self.raw_data, directory, file_name)
 
-
     def _split_data(self):
         X_ = self.raw_data.drop([self.target], axis=1)
         y_ = self.raw_data[self.target]
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(X_, y_, test_size=self.test_size, random_state=self.seed)
-        #self.x_train = self.x_train.astype('float').reset_index(drop=True)
-        #self.y_train = self.y_train.astype('float').reset_index(drop=True)
-        print('after split shape, x',self.x_train.shape)
-        print('after split cols', self.x_train.columns)
-        print('after split shape, y', self.y_train.shape)
-        print('after split types', self.x_train.dtypes.value_counts())
+        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
+            X_, y_, test_size=self.test_size, random_state=self.seed
+        )
+        # self.x_train = self.x_train.astype('float').reset_index(drop=True)
+        # self.y_train = self.y_train.astype('float').reset_index(drop=True)
+        print("after split shape, x", self.x_train.shape)
+        print("after split cols", self.x_train.columns)
+        print("after split shape, y", self.y_train.shape)
+        print("after split types", self.x_train.dtypes.value_counts())
         print(self.y_train.dtypes)
-
-
-
 
     def _GSCV_REG(self):
 
         for i in range(5):
             self.seed = i
 
-            '''Train-Test Split'''
+            """Train-Test Split"""
             X_ = self.raw_data.drop([self.target], axis=1)
             y_ = self.raw_data[self.target]
-            self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(X_, y_, test_size=0.30,
-                                                                                    random_state=self.seed)
+            self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(
+                X_, y_, test_size=0.30, random_state=self.seed
+            )
             # self.x_train = self.x_train.astype('float').reset_index(drop=True)
             # self.y_train = self.y_train.astype('float').reset_index(drop=True)
-            print('after split shape, x', self.x_train.shape)
-            print('after split cols', self.x_train.columns)
-            print('after split shape, y', self.y_train.shape)
-            print('after split types', self.x_train.dtypes.value_counts())
+            print("after split shape, x", self.x_train.shape)
+            print("after split cols", self.x_train.columns)
+            print("after split shape, y", self.y_train.shape)
+            print("after split types", self.x_train.dtypes.value_counts())
             print(self.y_train.dtypes)
 
-            '''Scaling Features'''
+            """Scaling Features"""
             num_cols = self.x_train.columns  # .select_dtypes(include=['float']).columns
             # num_cols = self.x_train.columns[self.x_train.dtypes.apply(lambda c: np.issubdtype(c, np.number))]
             # print('Numerical Columns: \n', num_cols)
@@ -265,20 +315,24 @@ class PipelineSearch:
             self.x_test[num_cols] = scaler.fit_transform(self.x_test[num_cols])
             print(len(self.x_test))
 
-
-
             for s in range(len(selection)):
 
-
                 for m in range(len(models)):
-                    model = Pipeline([
-                        ('sampling', selection[s]),
-                        #('PCA', PCA()),
-                        (models[m])
-                    ])
+                    model = Pipeline(
+                        [
+                            ("sampling", selection[s]),
+                            # ('PCA', PCA()),
+                            (models[m]),
+                        ]
+                    )
 
-
-                    gscv = GridSearchCV(estimator=model, param_grid=params[m], cv=3, scoring=make_scorer(mean_squared_error),n_jobs=6)
+                    gscv = GridSearchCV(
+                        estimator=model,
+                        param_grid=params[m],
+                        cv=3,
+                        scoring=make_scorer(mean_squared_error),
+                        n_jobs=6,
+                    )
                     gscv.fit(self.x_train, self.y_train)
                     print(gscv.cv_results_)
                     print("best estimator is: {}".format(gscv.best_estimator_))
@@ -300,16 +354,26 @@ class PipelineSearch:
                         self.seed = i
                         X_ = self.raw_data.drop([self.target], axis=1)
                         y_ = self.raw_data[self.target]
-                        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(X_, y_, test_size=0.30,
-                                                                                                random_state=self.seed)
+                        (
+                            self.x_train,
+                            self.x_test,
+                            self.y_train,
+                            self.y_test,
+                        ) = train_test_split(
+                            X_, y_, test_size=0.30, random_state=self.seed
+                        )
 
                         num_cols = self.x_train.columns
                         scaler = MinMaxScaler()
 
-                        self.x_train[num_cols] = scaler.fit_transform(self.x_train[num_cols])
+                        self.x_train[num_cols] = scaler.fit_transform(
+                            self.x_train[num_cols]
+                        )
                         print(len(self.x_train))
 
-                        self.x_test[num_cols] = scaler.fit_transform(self.x_test[num_cols])
+                        self.x_test[num_cols] = scaler.fit_transform(
+                            self.x_test[num_cols]
+                        )
                         print(len(self.x_test))
 
                         best_estimator = gscv.best_estimator_
@@ -320,29 +384,75 @@ class PipelineSearch:
 
                         print(gscv.best_score_)
 
-                        results_string = str([self.seed, str(gscv.best_score_), str(mean_absolute_error(self.y_test, y_pred_))
-                                                 ,str(math.sqrt(mean_squared_error(self.y_test, y_pred_))), str(pearsonr(self.y_test, y_pred_)),
-                                              str(gscv.best_estimator_),str(gscv.best_params_), # die letzten 2 überprüfen was die genau bedeuten, MSE und RMSE ergänzen
-                                              str(selection[s]), str(gscv.best_params_)]) + '\n'
+                        results_string = (
+                            str(
+                                [
+                                    self.seed,
+                                    str(gscv.best_score_),
+                                    str(mean_absolute_error(self.y_test, y_pred_)),
+                                    str(
+                                        math.sqrt(
+                                            mean_squared_error(self.y_test, y_pred_)
+                                        )
+                                    ),
+                                    str(pearsonr(self.y_test, y_pred_)),
+                                    str(gscv.best_estimator_),
+                                    str(
+                                        gscv.best_params_
+                                    ),  # die letzten 2 überprüfen was die genau bedeuten, MSE und RMSE ergänzen
+                                    str(selection[s]),
+                                    str(gscv.best_params_),
+                                ]
+                            )
+                            + "\n"
+                        )
                         print(results_string)
-                        with open(self.results_filepath, 'a')as f:
+                        with open(self.results_filepath, "a") as f:
                             f.write(results_string)
 
                         aggregate_results.append(
-                            [self.seed, round(gscv.best_score_, 3), mean_absolute_error(self.y_test, y_pred_), math.sqrt(mean_squared_error(self.y_test, y_pred_)),pearsonr(self.y_test, y_pred_)[0],pearsonr(self.y_test, y_pred_)[1]])
+                            [
+                                self.seed,
+                                round(gscv.best_score_, 3),
+                                mean_absolute_error(self.y_test, y_pred_),
+                                math.sqrt(mean_squared_error(self.y_test, y_pred_)),
+                                pearsonr(self.y_test, y_pred_)[0],
+                                pearsonr(self.y_test, y_pred_)[1],
+                            ]
+                        )
 
                         print(aggregate_results)
-                        median_results.append([round(mean_absolute_error(self.y_test, y_pred_), 3)])
+                        median_results.append(
+                            [round(mean_absolute_error(self.y_test, y_pred_), 3)]
+                        )
 
                 median = np.median(median_results)
-                aggregate_results_mean = np.around(np.mean(aggregate_results, axis=0), decimals=3)
+                aggregate_results_mean = np.around(
+                    np.mean(aggregate_results, axis=0), decimals=3
+                )
 
                 # print(aggregate_results_mean)
-                results_str = str(
-                    [aggregate_results_mean[0], aggregate_results_mean[1], aggregate_results_mean[2], median,
-                     aggregate_results_mean[3], aggregate_results_mean[4], aggregate_results_mean[5],
-                     str(selection[s]), str(gscv.best_estimator_),str(gscv.best_params_)]) + '\n'
+                results_str = (
+                    str(
+                        [
+                            aggregate_results_mean[0],
+                            aggregate_results_mean[1],
+                            aggregate_results_mean[2],
+                            median,
+                            aggregate_results_mean[3],
+                            aggregate_results_mean[4],
+                            aggregate_results_mean[5],
+                            str(selection[s]),
+                            str(gscv.best_estimator_),
+                            str(gscv.best_params_),
+                        ]
+                    )
+                    + "\n"
+                )
                 with open(
-                        'C:\\Users\\mariu\\OneDrive\\Dokumente\\NOVA\\Thesis\\20191015_new_data\\Final Results\\AVG\\DTR\\_results_' + str(
-                                self.target) + '.csv', 'a')as f:
+                    "C:\\Users\\mariu\\OneDrive\\Dokumente\\NOVA\\Thesis\\20191015_new_data\\Final Results\\AVG\\DTR\\_results_"
+                    + str(self.target)
+                    + ".csv",
+                    "a",
+                ) as f:
                     f.write(results_str)
