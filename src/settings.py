@@ -64,13 +64,13 @@ FEATURE_LIST = [
 ]
 
 SELECTION = [
-    PCA(n_components=3),
-    PCA(n_components=5),
-    RFE(SVR(kernel="linear"), 9, step=1),
+#    PCA(n_components=3),
+#    PCA(n_components=5),
+#    RFE(SVR(kernel="linear"), 9, step=1),
 ]
 
 MODELS = [
-    ("DTR", DecisionTreeRegressor()),
+#    ("DTR", DecisionTreeRegressor()),
     # ('SymbolicRegressor',SymbolicRegressor()),
     # ('RandomForestRegressor', RandomForestRegressor()),
     # ('AdaBoostRegressor', AdaBoostRegressor()),

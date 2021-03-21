@@ -1,5 +1,9 @@
 # standard imports
 import logging
+from pathlib import PurePath
+import os
+import shutil
+from datetime import datetime, date
 
 # project imports
 from src.settings import FEATURE_LIST, SEED
@@ -64,7 +68,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import _tree
 from scipy.stats import mstats
-from datetime import datetime, date
 
 
 from sklearn.preprocessing import LabelEncoder
@@ -72,7 +75,7 @@ from sklearn.preprocessing import LabelEncoder
 # import gplearn
 import warnings
 from sklearn.exceptions import DataConversionWarning
-from keras.wrappers.scikit_learn import KerasClassifier
+#from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
@@ -122,7 +125,7 @@ class PipelineSearch:
 
         self.target = target
         self.task_type = task_type
-        self.raw_data = self._pick_features(pd.read_excel(file_path))
+        self.raw_data = self._import_data(file_path)
         self.results_filepath = results_filepath
         self.seed = seed if seed is not None else SEED
         self.test_size = test_size
@@ -173,6 +176,31 @@ class PipelineSearch:
                 df.shape, df.columns.values
             )
         )
+        return df
+
+    def _import_data(self, file_path):
+        """
+        Internal Helper Function to check whether a pickle already exists or not.
+        """
+        # set up the file paths for importing and exporting the pickled df
+        cwd = os.getcwd()
+        export_file_path = PurePath(cwd).joinpath("tmp")
+        export_file_name = str(self.target) + "_" + str(date.today()) + ".p"
+        full_path = export_file_path.joinpath(export_file_name)
+
+        try:
+            df = pd.read_pickle(full_path)
+            logging.info("Raw_date pickle imported.!")
+        except FileNotFoundError:
+            df = self._pick_features(pd.read_excel(file_path))
+
+            try:
+                os.mkdir(export_file_path)
+                df.to_pickle(full_path)
+                logging.info("File dumped as {}".format(full_path))
+            except:
+                logging.info("File dump failed. Path: {}".format(full_path))
+
         return df
 
     def preprocessing(self):

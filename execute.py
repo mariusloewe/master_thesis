@@ -10,7 +10,7 @@ from src.settings import TARGETS_BINARY, TARGETS_REGRESSION, TARGETS_MULTICLASS
 
 def main():
     logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s :: %(levelname)s :: %(message)s"
+        level=logging.INFO, format="%(asctime)s - [%(filename)s:%(lineno)s - %(funcName)20s() ] - %(message)s"
     )
     logging.info("Start the run!")
     results_filepath = PurePath("results")  # TODO: Define the input/output paths
