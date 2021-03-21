@@ -1,0 +1,11 @@
+# ignore the tmp folder
+/tmp/*
+
+# ignore tmp folders in src folder
+/src/**/tmp
+
+# ignore results folder
+/results/*
+
+# ignore pycharms ideas
+.idea/*
