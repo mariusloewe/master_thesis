@@ -10,3 +10,6 @@
 
 # ignore pycharms ideas
 .idea/*
+
+# ignore all pycaches
+src/__pycache__/*
