@@ -4,8 +4,9 @@
 # ignore tmp folders in src folder
 /src/**/tmp
 
-# ignore results folder
+# ignore results and input folder
 /results/*
+/input/*
 
 # ignore pycharms ideas
 .idea/*
