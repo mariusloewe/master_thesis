@@ -75,7 +75,8 @@ from sklearn.preprocessing import LabelEncoder
 # import gplearn
 import warnings
 from sklearn.exceptions import DataConversionWarning
-#from keras.wrappers.scikit_learn import KerasClassifier
+
+# from keras.wrappers.scikit_learn import KerasClassifier
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
@@ -126,12 +127,13 @@ class PipelineSearch:
         self.target = target
         self.task_type = task_type
         self.raw_data = self._import_data(file_path)
+        self.processed_data = None
         self.results_filepath = results_filepath
         self.seed = seed if seed is not None else SEED
         self.test_size = test_size
 
         ##PRE-PROCESS
-        self.preprocessing()
+        self._preprocessing()
 
         ##SPLIT
         self.x_train = pd.DataFrame()
@@ -190,7 +192,7 @@ class PipelineSearch:
 
         try:
             df = pd.read_pickle(full_path)
-            logging.info("Raw_date pickle imported.!")
+            logging.info("Raw_data pickle imported.!")
         except FileNotFoundError:
             df = self._pick_features(pd.read_excel(file_path))
 
@@ -203,11 +205,30 @@ class PipelineSearch:
 
         return df
 
-    def preprocessing(self):
+    def _load_processed_date(self, directory, file_name):
         """
-        # TODO: write docstring
-        :return:
+        Loads processed data from csv file and sets as self.processed_data. Returns False if file not found.
         """
+        try:
+            file_path = PurePath(directory).joinpath(file_name)
+            self.processed_data = pd.read_csv(file_path)
+            logging.info("Imported processed data from {}".format(file_path))
+            return True
+        except FileNotFoundError:
+            logging.info(
+                "Processed Data file not found - continuing in preprocessing.!"
+            )
+            return False
+
+    def _preprocessing(self):
+        """
+        This internal function contains as a wrapper for the preprocessing steps, which are:
+        i.) Remove Nan's with SOMA Patients
+        ii.) One-Hot Encode Gender, Primary Tumor, First met Organ Site
+        iii.) Get the current age of patients
+        iv.) Sets the result as self.processed_date and dumps it on disk.
+        """
+
         # TODO: Marius: Are you sure you want the age "today" and not the age of the first examination?
         # Also, think about reproducability - at least I would have the date fixed
         def calculate_age(born, ref_date=None):
@@ -215,65 +236,85 @@ class PipelineSearch:
             Helper Function to calculate the age.
             """
             born = pd.to_datetime(born)
-            today = pd.to_datetime(ref_date) if ref_date is not None else date.today()
-            return (today - born).dt.years
+            today = (
+                pd.to_datetime(ref_date)
+                if ref_date is not None
+                else pd.to_datetime("today")
+            )
+            return (today - born) / np.timedelta64(1, "Y")
+
+        # first check if the file already exists
+        file_name = "preprocessed_data_{}_target.csv".format(self.target)
+        directory = PurePath("input").joinpath("processed_data")
+
+        # check if file is already present and returns if its the case
+        if self._load_processed_date(directory, file_name):
+            return
 
         num_valid_entries = 175
-        self.raw_data = self.raw_data[0:num_valid_entries]
+        self.processed_data = self.raw_data[0:num_valid_entries].copy()
 
         # TODO: Marius validate this part, it seems very odd to me how you remove nan's
         # filter out all not SOMA patients
-        temp = self.raw_data.loc[self.raw_data["SOMA            1=Y 0=N"] == 0]
+        temp = self.processed_data.loc[
+            self.processed_data["SOMA            1=Y 0=N"] == 0
+        ]
         # replace all nans with 0
         temp = temp.replace(np.nan, 0)
-        self.raw_data = self.raw_data.loc[self.raw_data["SOMA            1=Y 0=N"] == 1]
-        self.raw_data = self.raw_data.append(temp)
-        self.raw_data = self.raw_data.dropna()
+        self.processed_data = self.processed_data.loc[
+            self.processed_data["SOMA            1=Y 0=N"] == 1
+        ]
+        self.processed_data = self.processed_data.append(temp)
+        self.processed_data = self.processed_data.dropna()
 
-        self.raw_data["Gender"] = self.raw_data["Gender"].apply(
+        self.processed_data["Gender"] = self.processed_data["Gender"].apply(
             lambda x: str(x).lower().strip()
         )
-        self.raw_data["Primary Tumour"] = self.raw_data["Primary Tumour"].apply(
-            lambda x: str(x).lower().strip()
-        )
-        self.raw_data["First Met Organ Site"] = self.raw_data[
+        self.processed_data["Primary Tumour"] = self.processed_data[
+            "Primary Tumour"
+        ].apply(lambda x: str(x).lower().strip())
+        self.processed_data["First Met Organ Site"] = self.processed_data[
             "First Met Organ Site"
         ].apply(lambda x: str(x).lower().strip())
 
-        # TODO: Marius: I think with your implementation you don't drop the original column, please check what is valid
-        # one hot encode categorical columns and drop the original column
-        self.raw_data = pd.concat(
+        # one hot encode categorical columns
+        self.processed_data = pd.concat(
             [
-                self.raw_data,
+                self.processed_data,
                 pd.get_dummies(
-                    self.raw_data["Primary Tumour"], prefix="Primary Tumour"
+                    self.processed_data["Primary Tumour"], prefix="Primary Tumour"
                 ),
             ],
             axis=1,
         )
-        self.raw_data = pd.concat(
-            [self.raw_data, pd.get_dummies(self.raw_data["Gender"], prefix="Gender")],
+        self.processed_data = pd.concat(
+            [
+                self.processed_data,
+                pd.get_dummies(self.processed_data["Gender"], prefix="Gender"),
+            ],
             axis=1,
         )
-        self.raw_data = pd.concat(
+        self.processed_data = pd.concat(
             [
-                self.raw_data,
+                self.processed_data,
                 pd.get_dummies(
-                    self.raw_data["First Met Organ Site"], prefix="First Met Organ Site"
+                    self.processed_data["First Met Organ Site"],
+                    prefix="First Met Organ Site",
                 ),
             ],
             axis=1,
         )
         LOGGER.info(
             "After one-hot-encoding following columns are present {}".format(
-                self.raw_data.columns.values
+                self.processed_data.columns.values
             )
         )
 
-        self.raw_data["age"] = self.raw_data["DoB"].apply(calculate_age)
+        # get the current age of patients
+        self.processed_data["age"] = self.processed_data["DoB"].apply(calculate_age)
 
-        # ahhhh there we go with dropping the columns - why do we drop gender_m?
-        self.raw_data = self.raw_data.drop(
+        # dropping the columns - why do we drop gender_m?
+        self.processed_data = self.processed_data.drop(
             columns=[
                 "DoB",
                 "Gender",
@@ -284,16 +325,16 @@ class PipelineSearch:
         )
 
         # Remove rows with NaN values
-        self.raw_data = self.raw_data.dropna()
+        self.processed_data = self.processed_data.dropna()
         LOGGER.info(
             "Dataframe after preprocessing has shape {}. {} Patients were removed from dataset.".format(
-                self.raw_data.shape, (num_valid_entries - self.raw_data.shape[0])
+                self.processed_data.shape,
+                (num_valid_entries - self.processed_data.shape[0]),
             )
         )
 
-        file_name = "preprocessed_data_{}_target.csv".format(self.target)
-        directory = "input"
-        df_to_csv(self.raw_data, directory, file_name)
+        # dump to disc
+        df_to_csv(self.processed_data, directory, file_name)
 
     def _split_data(self):
         X_ = self.raw_data.drop([self.target], axis=1)
