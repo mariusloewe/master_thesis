@@ -5,8 +5,12 @@ import os
 import shutil
 from datetime import datetime, date
 
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+
 # project imports
 from src.settings import FEATURE_LIST, SEED
+from src.grid import PARAMETERS, MODELS
 from src.utils import df_to_csv
 
 import sys
@@ -39,21 +43,20 @@ from sklearn.metrics import precision_score, recall_score
 from sklearn.model_selection import cross_val_predict
 from sklearn.metrics import roc_curve
 
-# from imblearn.pipeline import Pipeline
+from imblearn.pipeline import Pipeline
 
 from xgboost import XGBClassifier
 from xgboost import XGBRegressor
 from sklearn.metrics import make_scorer
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
-from sklearn.svm import SVR
+
 
 from sklearn.decomposition import PCA
 from sklearn.linear_model import ElasticNet
 from sklearn.dummy import DummyClassifier
 
 from sklearn.neural_network import MLPClassifier
-from sklearn.feature_selection import RFE
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 
@@ -125,49 +128,28 @@ class PipelineSearch:
         self.results_filepath = results_filepath
         self.seed = seed if seed is not None else SEED
         self.test_size = test_size
-
         ##PRE-PROCESS
         self.processed_data = None
-        self._preprocessing()
-
         ##SPLIT
         self.x_train = None
         self.y_train = None
         self.x_test = None
         self.y_test = None
-        self._split_data()
-
         ## Scaled Data
         self.x_train_scaled = None
         self.x_test_scaled = None
         self.y_train_scaled = None
         self.y_test_scaled = None
 
-        ##DATA_PREP
-        # self._Scaling_Features()
-        # self.best_classifier = {}
-        # self.X_train_smote = np.zeros(shape=(2636, 6))
-        # self.y_train_smote = np.zeros(shape=(2636,))
-        # self._SMOTE()
-        # self._SMOTE_Boarder()
-        # self._SMOTE_SVM()
-        # self._SMOTETomek()
-        # IMPLEMENT: '''SMOTEENN'''
-        # self._ANASYN()
-        # self._Scaling_Features()
-        # self.feat_scores = pd.DataFrame()
-        # self.select_KBest()
-        # self.boruta_selection()
+        # Fill above defined attributes
+        self._preprocessing()
+        self._split_data()
 
-        ##MODEL
-        # self.scoring_metric = make_scorer(f1_score)  #'recall' # make_scorer(f1_score)
-        # self._ADABoost()
-
-    def search(self):
+    def search(self, model_class, sampler=None, scoring_function=mean_squared_error, n_jobs=3):
         """
         Public Function that carries out the Pipeline Search.
         """
-        self._GSCV_REG()
+        self._GSCV_REG(model_class, sampler=sampler, scoring_function=scoring_function, n_jobs=n_jobs)
 
     def _pick_features(self, df):
         """
@@ -376,8 +358,8 @@ class PipelineSearch:
             tmp_cols = [key for key, value in df.dtypes.items() if value.kind is "f"]
             tmp_df = df[tmp_cols]
             scaler = MinMaxScaler()
-            scaled_tmp = scaler.fit_transform(tmp_df)
-            return pd.concat([scaled_tmp, self.x_train.drop(tmp_cols, axis=1)])
+            df[tmp_cols] = scaler.fit_transform(tmp_df)
+            return df
 
         def _scale_y(s):
             scaler = MinMaxScaler()
@@ -401,140 +383,34 @@ class PipelineSearch:
             )
         )
 
-    def _GSCV_REG(self):
+    def _GSCV_REG(self, model_class, sampler: callable, scoring_function, n_jobs):
 
-        for s in range(len(selection)):
+        if sampler is not None:
+            X_train_sampled, y_train_sampled = sampler(self.seed, self.x_train_scaled, self.y_train_scaled, self.target)
+        else:
+            X_train_sampled, y_train_sampled = self.x_train_scaled, self.y_train_scaled
 
-            for m in range(len(models)):
-                model = Pipeline(
-                    [
-                        ("sampling", selection[s]),
-                        # ('PCA', PCA()),
-                        (models[m]),
-                    ]
-                )
+        model = MODELS[model_class]
+        model_instance = model()
+        parameter = PARAMETERS[model_class]
 
-                gscv = GridSearchCV(
-                    estimator=model,
-                    param_grid=params[m],
-                    cv=3,
-                    scoring=make_scorer(mean_squared_error),
-                    n_jobs=6,
-                )
-                gscv.fit(self.x_train, self.y_train)
-                print(gscv.cv_results_)
-                print("best estimator is: {}".format(gscv.best_estimator_))
-                print("best score are: {}".format(gscv.best_score_))
-                print("best parameters are: {}".format(gscv.best_params_))
-                # self.best_classifier[name] = gscv
+        gscv = GridSearchCV(
+            estimator=model_instance,
+            param_grid=parameter,
+            cv=3,
+            scoring=make_scorer(scoring_function),
+            n_jobs=n_jobs,
+            verbose=1
+        )
+        gscv.fit(X_train_sampled, y_train_sampled)
 
-                best_estimator = gscv.best_estimator_
 
-                best = best_estimator
-                best.fit(self.x_train, self.y_train)
+        print(gscv.cv_results_)
+        print("best estimator is: {}".format(gscv.best_estimator_))
+        print("best score are: {}".format(gscv.best_score_))
+        print("best parameters are: {}".format(gscv.best_params_))
+        # self.best_classifier[name] = gscv
 
-                y_pred_ = best.predict(self.x_test)
+        best_estimator = gscv.best_estimator_
 
-                aggregate_results = list()
-                median_results = list()
 
-                for i in range(5):
-                    self.seed = i
-                    X_ = self.raw_data.drop([self.target], axis=1)
-                    y_ = self.raw_data[self.target]
-                    (
-                        self.x_train,
-                        self.x_test,
-                        self.y_train,
-                        self.y_test,
-                    ) = train_test_split(X_, y_, test_size=0.30, random_state=self.seed)
-
-                    num_cols = self.x_train.columns
-                    scaler = MinMaxScaler()
-
-                    self.x_train[num_cols] = scaler.fit_transform(
-                        self.x_train[num_cols]
-                    )
-                    print(len(self.x_train))
-
-                    self.x_test[num_cols] = scaler.fit_transform(self.x_test[num_cols])
-                    print(len(self.x_test))
-
-                    best_estimator = gscv.best_estimator_
-
-                    best_estimator.fit(self.x_train, self.y_train)
-
-                    y_pred_ = best_estimator.predict(self.x_test)
-
-                    print(gscv.best_score_)
-
-                    results_string = (
-                        str(
-                            [
-                                self.seed,
-                                str(gscv.best_score_),
-                                str(mean_absolute_error(self.y_test, y_pred_)),
-                                str(
-                                    math.sqrt(mean_squared_error(self.y_test, y_pred_))
-                                ),
-                                str(pearsonr(self.y_test, y_pred_)),
-                                str(gscv.best_estimator_),
-                                str(
-                                    gscv.best_params_
-                                ),  # die letzten 2 überprüfen was die genau bedeuten, MSE und RMSE ergänzen
-                                str(selection[s]),
-                                str(gscv.best_params_),
-                            ]
-                        )
-                        + "\n"
-                    )
-                    print(results_string)
-                    with open(self.results_filepath, "a") as f:
-                        f.write(results_string)
-
-                    aggregate_results.append(
-                        [
-                            self.seed,
-                            round(gscv.best_score_, 3),
-                            mean_absolute_error(self.y_test, y_pred_),
-                            math.sqrt(mean_squared_error(self.y_test, y_pred_)),
-                            pearsonr(self.y_test, y_pred_)[0],
-                            pearsonr(self.y_test, y_pred_)[1],
-                        ]
-                    )
-
-                    print(aggregate_results)
-                    median_results.append(
-                        [round(mean_absolute_error(self.y_test, y_pred_), 3)]
-                    )
-
-            median = np.median(median_results)
-            aggregate_results_mean = np.around(
-                np.mean(aggregate_results, axis=0), decimals=3
-            )
-
-            # print(aggregate_results_mean)
-            results_str = (
-                str(
-                    [
-                        aggregate_results_mean[0],
-                        aggregate_results_mean[1],
-                        aggregate_results_mean[2],
-                        median,
-                        aggregate_results_mean[3],
-                        aggregate_results_mean[4],
-                        aggregate_results_mean[5],
-                        str(selection[s]),
-                        str(gscv.best_estimator_),
-                        str(gscv.best_params_),
-                    ]
-                )
-                + "\n"
-            )
-            with open(
-                "C:\\Users\\mariu\\OneDrive\\Dokumente\\NOVA\\Thesis\\20191015_new_data\\Final Results\\AVG\\DTR\\_results_"
-                + str(self.target)
-                + ".csv",
-                "a",
-            ) as f:
-                f.write(results_str)

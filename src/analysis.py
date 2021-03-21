@@ -281,4 +281,113 @@ class PipelineAnalysis:
                                 'C:\\Users\\mariu\\OneDrive\\Dokumente\\NOVA\\Thesis\\20191015_new_data\\Final Results\\AVG\\DTR\\_results_' + str(
                                         self.target) + '.csv', 'a')as f:
                             f.write(results_str)
+                            
+        best = best_estimator
+        best.fit(self.x_train, self.y_train)
+
+        y_pred_ = best.predict(self.x_test)
+
+        aggregate_results = list()
+        median_results = list()
+
+        for i in range(5):
+            self.seed = i
+            X_ = self.raw_data.drop([self.target], axis=1)
+            y_ = self.raw_data[self.target]
+            (
+                self.x_train,
+                self.x_test,
+                self.y_train,
+                self.y_test,
+            ) = train_test_split(X_, y_, test_size=0.30, random_state=self.seed)
+
+            num_cols = self.x_train.columns
+            scaler = MinMaxScaler()
+
+            self.x_train[num_cols] = scaler.fit_transform(
+                self.x_train[num_cols]
+            )
+            print(len(self.x_train))
+
+            self.x_test[num_cols] = scaler.fit_transform(self.x_test[num_cols])
+            print(len(self.x_test))
+
+            best_estimator = gscv.best_estimator_
+
+            best_estimator.fit(self.x_train, self.y_train)
+
+            y_pred_ = best_estimator.predict(self.x_test)
+
+            print(gscv.best_score_)
+
+            results_string = (
+                str(
+                    [
+                        self.seed,
+                        str(gscv.best_score_),
+                        str(mean_absolute_error(self.y_test, y_pred_)),
+                        str(
+                            math.sqrt(mean_squared_error(self.y_test, y_pred_))
+                        ),
+                        str(pearsonr(self.y_test, y_pred_)),
+                        str(gscv.best_estimator_),
+                        str(
+                            gscv.best_params_
+                        ),  # die letzten 2 überprüfen was die genau bedeuten, MSE und RMSE ergänzen
+                        str(selection[s]),
+                        str(gscv.best_params_),
+                    ]
+                )
+                + "\n"
+            )
+            print(results_string)
+            with open(self.results_filepath, "a") as f:
+                f.write(results_string)
+
+            aggregate_results.append(
+                [
+                    self.seed,
+                    round(gscv.best_score_, 3),
+                    mean_absolute_error(self.y_test, y_pred_),
+                    math.sqrt(mean_squared_error(self.y_test, y_pred_)),
+                    pearsonr(self.y_test, y_pred_)[0],
+                    pearsonr(self.y_test, y_pred_)[1],
+                ]
+            )
+
+            print(aggregate_results)
+            median_results.append(
+                [round(mean_absolute_error(self.y_test, y_pred_), 3)]
+            )
+
+    median = np.median(median_results)
+    aggregate_results_mean = np.around(
+        np.mean(aggregate_results, axis=0), decimals=3
+    )
+
+    # print(aggregate_results_mean)
+    results_str = (
+        str(
+            [
+                aggregate_results_mean[0],
+                aggregate_results_mean[1],
+                aggregate_results_mean[2],
+                median,
+                aggregate_results_mean[3],
+                aggregate_results_mean[4],
+                aggregate_results_mean[5],
+                str(selection[s]),
+                str(gscv.best_estimator_),
+                str(gscv.best_params_),
+            ]
+        )
+        + "\n"
+    )
+    with open(
+        "C:\\Users\\mariu\\OneDrive\\Dokumente\\NOVA\\Thesis\\20191015_new_data\\Final Results\\AVG\\DTR\\_results_"
+        + str(self.target)
+        + ".csv",
+        "a",
+    ) as f:
+        f.write(results_str)
 """

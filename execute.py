@@ -7,6 +7,8 @@ import logging
 from src.search import PipelineSearch
 from src.settings import TARGETS_BINARY, TARGETS_REGRESSION, TARGETS_MULTICLASS
 
+from src.utils import _SMOTE
+
 
 def main():
     logging.basicConfig(
@@ -17,12 +19,14 @@ def main():
     input_file_path = PurePath("input/input_file.xlsx")
     target = TARGETS_BINARY[0]
     task_type = "Binary_Classification"
-    dataframe = PipelineSearch(
+    first_search = PipelineSearch(
         file_path=input_file_path,
         target=target,
         task_type=task_type,
         results_filepath=results_filepath,
     )
+
+    first_search.search("DTR", sampler=_SMOTE)
 
 
 if __name__ == "__main__":

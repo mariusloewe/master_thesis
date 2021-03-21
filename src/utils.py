@@ -96,29 +96,6 @@ def df_to_csv(df, directory, file_name):
     logging.info("{} was dumped on disc.".format(file_path))
 
 
-def scaling_features(df, features_to_scale=None):
-    """
-    Scales features with MinMaxScaler of a provided df.
-    :param df:
-    :param features_to_scale:
-    :return:
-    """
-    num_cols = df.columns if features_to_scale is None else features_to_scale
-
-    # .select_dtypes(include=['float']).columns
-    # num_cols = self.x_train.columns[self.x_train.dtypes.apply(lambda c: np.issubdtype(c, np.number))]
-    # print('Numerical Columns: \n', num_cols)
-
-    # Only scale continuous values
-    scaler = MinMaxScaler()
-    # if Bucketing - every feature is dtype object - so no need to specify to scale only numerical features
-
-    df[num_cols] = scaler.fit_transform(df[num_cols])
-    logging.info("Scaled {} columns.".format(num_cols))
-
-    return df
-
-
 # Sampling Methods
 # TODO: Finish refactoring sampling methods
 def _SMOTE(seed, X, y, target, k_neighbors=3):
@@ -134,13 +111,13 @@ def _SMOTE(seed, X, y, target, k_neighbors=3):
 
     # TODO: Marius: Should the original frame be concatenated with the new frames?
     smote = SMOTE(k_neighbors=k_neighbors, random_state=seed)  # sampling_strategy=0.8
-    X_smote, y_smote = smote.fit_sample(X, y)
+    X_smote, y_smote = smote.fit_resample(X, y)
 
     X_smote = pd.DataFrame(X_smote, columns=X.columns)
     y_smote = pd.DataFrame(y_smote, columns=[target])
 
-    pos_before = y.loc[y[target] == 1].shape[0]
-    pos_after = y_smote.loc[y_smote[target] == 1].shape[0]
+    pos_before = y.sum()
+    pos_after = y_smote.sum()
 
     logging.info(
         "Observations before applying SMOTE: {} and after applying SMOTE {}".format(
