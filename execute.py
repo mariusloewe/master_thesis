@@ -5,9 +5,9 @@ import logging
 
 # package imports
 from src.search import PipelineSearch
-from src.settings import TARGETS_BINARY, TARGETS_REGRESSION, TARGETS_MULTICLASS
+from src.helper.settings import TARGETS_BINARY
 
-from src.utils import _SMOTE
+from src.helper.utils import _SMOTE
 
 
 def main():

@@ -2,8 +2,6 @@
 import logging
 from pathlib import PurePath
 import os
-import shutil
-from datetime import datetime, date
 import json
 
 import warnings
@@ -11,86 +9,41 @@ import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 # project imports
-from src.settings import FEATURE_LIST, SEED
-from src.regression_grid import PARAMETERS, MODELS
-from src.utils import df_to_csv
+from src.helper.settings import FEATURE_LIST, SEED
+from src.helper.regression_grid import PARAMETERS, MODELS
+from src.helper.utils import df_to_csv
 
-import sys
 import pandas as pd
 import numpy as np
 from datetime import date
-from datetime import datetime
-from sklearn.model_selection import train_test_split
 
 # from data_loader import Dataset
 # from data_preprocessing import Processor
 # from feature_engineering import FeatureEngineer
 # from model import grid_search_MLP, assess_generalization_auprc, grid_search_RF
 
-from sklearn.tree import DecisionTreeRegressor
-
-
-from sklearn.model_selection import StratifiedKFold
-from sklearn.base import clone
-from sklearn.metrics import roc_auc_score
-import matplotlib
-import matplotlib.pyplot as plt
-import seaborn as sb
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import precision_score, recall_score
-from sklearn.model_selection import cross_val_predict
-from sklearn.metrics import roc_curve
-
-from imblearn.pipeline import Pipeline
-
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_absolute_error
 
-
-from sklearn.decomposition import PCA
-from sklearn.linear_model import ElasticNet
-from sklearn.dummy import DummyClassifier
-
-from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import roc_curve, auc, roc_auc_score
 
 # import scikitplot as skplt
-from sklearn import metrics
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import precision_score, recall_score, accuracy_score
 
 
 from sklearn.model_selection import GridSearchCV
 
-from sklearn.tree import _tree
-from scipy.stats import mstats
-
-
-from sklearn.preprocessing import LabelEncoder, MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler
 
 # import gplearn
-import warnings
-from sklearn.exceptions import DataConversionWarning
 
 # from keras.wrappers.scikit_learn import KerasClassifier
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import f1_score
-from sklearn.model_selection import cross_val_score
 
 
 # import graphviz
 # import pydotplus
-from IPython.display import Image
-from sklearn.tree import export_graphviz
 
 # from sklearn.externals.six import StringIO
-from scipy.stats import mannwhitneyu
-from sklearn.metrics import classification_report
-import re
-from math import nan
 
 # import torch
 # import torchvision as tv
@@ -99,9 +52,6 @@ from math import nan
 # import torch.nn.functional as F
 # from torch.autograd import Variable
 
-
-from sklearn.neighbors import KNeighborsClassifier
-import math
 
 # import featuretools as ft
 # from torchvision.utils import save_image

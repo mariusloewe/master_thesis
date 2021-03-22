@@ -2,8 +2,8 @@
 This file serves to create the grid-search's grid of classification tasks.
 """
 # project imports
-from src.settings import SEED
-from src.utils import _SMOTE, _SMOTETomek, _SMOTE_Border, _SMOTE_SVM
+from src.helper.settings import SEED
+from src.helper.utils import _SMOTE, _SMOTETomek, _SMOTE_Border, _SMOTE_SVM
 
 # sklearn feature selection
 from sklearn.feature_selection import RFE

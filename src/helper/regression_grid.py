@@ -2,7 +2,7 @@
 This file serves to create the grid for the regressions for the grid search.
 """
 # project imports
-from src.settings import SEED
+from src.helper.settings import SEED
 
 # sklearn feature selection
 from sklearn.feature_selection import RFE
@@ -12,7 +12,6 @@ from sklearn.decomposition import PCA
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.svm import SVR
 from sklearn.ensemble import (
-    GradientBoostingRegressor,
     AdaBoostRegressor,
     RandomForestRegressor,
 )
