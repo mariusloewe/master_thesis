@@ -4,6 +4,7 @@ from pathlib import PurePath
 import os
 import shutil
 from datetime import datetime, date
+import json
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -400,12 +401,16 @@ class PipelineSearch:
             cv=3,
             scoring=make_scorer(scoring_function),
             n_jobs=n_jobs,
-            verbose=1
+            verbose=0
         )
         gscv.fit(X_train_sampled, y_train_sampled)
 
 
         print(gscv.cv_results_)
+        output_dict = {"sampler": "SMOTE", "model_class": model_class, "params": gscv.best_params_}
+        json.dump(output_dict, open("results/first_dt.json", "w"), indent=4)
+
+
         print("best estimator is: {}".format(gscv.best_estimator_))
         print("best score are: {}".format(gscv.best_score_))
         print("best parameters are: {}".format(gscv.best_params_))
