@@ -1,3 +1,6 @@
+"""
+A package that carry miscellaneous utilities.
+"""
 # standard imports
 from pathlib import PurePath
 import logging
@@ -24,8 +27,6 @@ from sklearn.feature_selection import chi2
 
 # models
 from sklearn.ensemble import RandomForestRegressor
-
-### A package that carry miscellaenous utilities
 
 
 def calc_correlations(
