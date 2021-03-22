@@ -1,5 +1,7 @@
 class PipelineAnalysis:
     pass
+
+
 # TODO: Refactor this part
 """    
     def _algorithm_opt(self):

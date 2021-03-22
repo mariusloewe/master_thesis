@@ -24,7 +24,6 @@ from sklearn.feature_selection import chi2
 
 # models
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import AdaBoostClassifier
 
 ### A package that carry miscellaenous utilities
 
@@ -131,7 +130,7 @@ def _SMOTE(seed, X, y, target, k_neighbors=3):
     return X_smote, y_smote
 
 
-def _SMOTE_Boarder(self):
+def _SMOTE_Border(self):
     # Oversampling - SMOTE - Synthetic Minority Over-sampling Technique
 
     print("before SMOTE df", self.x_train.shape)

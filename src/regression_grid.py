@@ -4,8 +4,6 @@ This file serves to create the grid for the regressions for the grid search.
 # project imports
 from src.settings import SEED
 
-# imports
-
 # sklearn feature selection
 from sklearn.feature_selection import RFE
 from sklearn.decomposition import PCA

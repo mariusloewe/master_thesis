@@ -26,13 +26,10 @@ from sklearn.model_selection import train_test_split
 # from data_preprocessing import Processor
 # from feature_engineering import FeatureEngineer
 # from model import grid_search_MLP, assess_generalization_auprc, grid_search_RF
-from sklearn.linear_model import SGDClassifier
+
 from sklearn.tree import DecisionTreeRegressor
 
-from sklearn.svm import SVC
 
-
-from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import StratifiedKFold
 from sklearn.base import clone
 from sklearn.metrics import roc_auc_score
@@ -46,7 +43,6 @@ from sklearn.metrics import roc_curve
 
 from imblearn.pipeline import Pipeline
 
-from xgboost import XGBClassifier
 
 from sklearn.metrics import make_scorer
 from sklearn.metrics import mean_squared_error
@@ -65,11 +61,10 @@ from sklearn.metrics import roc_curve, auc, roc_auc_score
 from sklearn import metrics
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_score, recall_score, accuracy_score
-from sklearn.ensemble import RandomForestClassifier
 
-from sklearn.linear_model import LogisticRegression
+
 from sklearn.model_selection import GridSearchCV
-from sklearn.tree import DecisionTreeClassifier
+
 from sklearn.tree import _tree
 from scipy.stats import mstats
 
@@ -84,7 +79,7 @@ from sklearn.exceptions import DataConversionWarning
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import f1_score
 from sklearn.model_selection import cross_val_score
-from sklearn.neighbors import KNeighborsClassifier
+
 
 # import graphviz
 # import pydotplus
@@ -105,7 +100,6 @@ from math import nan
 # from torch.autograd import Variable
 
 
-# from gplearn.genetic import SymbolicClassifier#
 from sklearn.neighbors import KNeighborsClassifier
 import math
 
