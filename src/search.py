@@ -7,11 +7,12 @@ from datetime import datetime, date
 import json
 
 import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
+
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 # project imports
 from src.settings import FEATURE_LIST, SEED
-from src.grid import PARAMETERS, MODELS
+from src.regression_grid import PARAMETERS, MODELS
 from src.utils import df_to_csv
 
 import sys
@@ -27,10 +28,9 @@ from sklearn.model_selection import train_test_split
 # from model import grid_search_MLP, assess_generalization_auprc, grid_search_RF
 from sklearn.linear_model import SGDClassifier
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.neighbors import KNeighborsRegressor
+
 from sklearn.svm import SVC
-from sklearn.neural_network import MLPRegressor
-from sklearn.linear_model import Lasso
+
 
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import StratifiedKFold
@@ -47,7 +47,7 @@ from sklearn.metrics import roc_curve
 from imblearn.pipeline import Pipeline
 
 from xgboost import XGBClassifier
-from xgboost import XGBRegressor
+
 from sklearn.metrics import make_scorer
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_absolute_error
@@ -103,13 +103,8 @@ from math import nan
 # import torch.nn as nn
 # import torch.nn.functional as F
 # from torch.autograd import Variable
-from sklearn.ensemble import (
-    GradientBoostingRegressor,
-    AdaBoostRegressor,
-    RandomForestRegressor,
-)
 
-# from gplearn.genetic import SymbolicRegressor
+
 # from gplearn.genetic import SymbolicClassifier#
 from sklearn.neighbors import KNeighborsClassifier
 import math
@@ -146,11 +141,18 @@ class PipelineSearch:
         self._preprocessing()
         self._split_data()
 
-    def search(self, model_class, sampler=None, scoring_function=mean_squared_error, n_jobs=3):
+    def search(
+        self, model_class, sampler=None, scoring_function=mean_squared_error, n_jobs=3
+    ):
         """
         Public Function that carries out the Pipeline Search.
         """
-        self._GSCV_REG(model_class, sampler=sampler, scoring_function=scoring_function, n_jobs=n_jobs)
+        self._GSCV_REG(
+            model_class,
+            sampler=sampler,
+            scoring_function=scoring_function,
+            n_jobs=n_jobs,
+        )
 
     def _pick_features(self, df):
         """
@@ -387,7 +389,9 @@ class PipelineSearch:
     def _GSCV_REG(self, model_class, sampler: callable, scoring_function, n_jobs):
 
         if sampler is not None:
-            X_train_sampled, y_train_sampled = sampler(self.seed, self.x_train_scaled, self.y_train_scaled, self.target)
+            X_train_sampled, y_train_sampled = sampler(
+                self.seed, self.x_train_scaled, self.y_train_scaled, self.target
+            )
         else:
             X_train_sampled, y_train_sampled = self.x_train_scaled, self.y_train_scaled
 
@@ -401,15 +405,17 @@ class PipelineSearch:
             cv=3,
             scoring=make_scorer(scoring_function),
             n_jobs=n_jobs,
-            verbose=0
+            verbose=0,
         )
         gscv.fit(X_train_sampled, y_train_sampled)
 
-
         print(gscv.cv_results_)
-        output_dict = {"sampler": "SMOTE", "model_class": model_class, "params": gscv.best_params_}
+        output_dict = {
+            "sampler": "SMOTE",
+            "model_class": model_class,
+            "params": gscv.best_params_,
+        }
         json.dump(output_dict, open("results/first_dt.json", "w"), indent=4)
-
 
         print("best estimator is: {}".format(gscv.best_estimator_))
         print("best score are: {}".format(gscv.best_score_))
@@ -417,5 +423,3 @@ class PipelineSearch:
         # self.best_classifier[name] = gscv
 
         best_estimator = gscv.best_estimator_
-
-
