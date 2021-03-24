@@ -131,7 +131,7 @@ class PipelineSearch:
         iv.) Sets the result as self.processed_date and dumps it on disk.
         """
 
-        # TODO: Marius: Are you sure you want the age "today" and not the age of the first examination?
+        # TODO: Implement ref date "Date of Dx"-"DoB"
         # Also, think about reproducability - at least I would have the date fixed
         def calculate_age(born, ref_date=None):
             """
@@ -180,6 +180,7 @@ class PipelineSearch:
         ].apply(lambda x: str(x).lower().strip())
 
         # one hot encode categorical columns
+        # TODO: One hot encode after selection
         self.processed_data = pd.concat(
             [
                 self.processed_data,
@@ -220,7 +221,6 @@ class PipelineSearch:
             columns=[
                 "DoB",
                 "Gender",
-                "Gender_m",
                 "Primary Tumour",
                 "First Met Organ Site",
             ]
@@ -293,7 +293,7 @@ class PipelineSearch:
             )
         )
 
-    def _GSCV_REG(self, model_class, sampler: callable, scoring_function, n_jobs):
+    def _GSCV_REG(self, model_class, sampler: callable, scoring_function, n_jobs, pca=None):
 
         if sampler is not None:
             X_train_sampled, y_train_sampled = sampler(
@@ -309,7 +309,7 @@ class PipelineSearch:
         gscv = GridSearchCV(
             estimator=model_instance,
             param_grid=parameter,
-            cv=3,
+            cv=5,
             scoring=make_scorer(scoring_function),
             n_jobs=n_jobs,
             verbose=0,
@@ -318,15 +318,24 @@ class PipelineSearch:
 
         print(gscv.cv_results_)
         output_dict = {
-            "sampler": "SMOTE",
+            "PCA": pca,
+            "sampler": str(sampler),
             "model_class": model_class,
             "params": gscv.best_params_,
+            "seed": self.seed
         }
-        json.dump(output_dict, open("results/first_dt.json", "w"), indent=4)
+        output_file_name = str(model_class) + "_" + str(self.target) + ".json"
+        json.dump(
+            output_dict,
+            open(self.results_filepath.joinpath(output_file_name), "w"),
+            indent=4,
+        )
 
         print("best estimator is: {}".format(gscv.best_estimator_))
         print("best score are: {}".format(gscv.best_score_))
         print("best parameters are: {}".format(gscv.best_params_))
-        # self.best_classifier[name] = gscv
 
         best_estimator = gscv.best_estimator_
+
+
+
