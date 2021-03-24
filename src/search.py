@@ -4,57 +4,20 @@ from pathlib import PurePath
 import os
 import json
 
-import warnings
-
-warnings.simplefilter(action="ignore", category=FutureWarning)
-
 # project imports
 from src.helper.settings import FEATURE_LIST, SEED
 from src.helper.regression_grid import PARAMETERS, MODELS
 from src.helper.utils import df_to_csv
 
+# DS imports
 import pandas as pd
 import numpy as np
 from datetime import date
 
-# from data_loader import Dataset
-# from data_preprocessing import Processor
-# from feature_engineering import FeatureEngineer
-# from model import grid_search_MLP, assess_generalization_auprc, grid_search_RF
-
-
-from sklearn.metrics import make_scorer
-from sklearn.metrics import mean_squared_error
-
-from sklearn.model_selection import train_test_split
-
-# import scikitplot as skplt
-
-
-from sklearn.model_selection import GridSearchCV
-
+# sklearn imports
+from sklearn.metrics import mean_squared_error, make_scorer
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.preprocessing import MinMaxScaler
-
-# import gplearn
-
-# from keras.wrappers.scikit_learn import KerasClassifier
-
-
-# import graphviz
-# import pydotplus
-
-# from sklearn.externals.six import StringIO
-
-# import torch
-# import torchvision as tv
-# import torchvision.transforms as transforms
-# import torch.nn as nn
-# import torch.nn.functional as F
-# from torch.autograd import Variable
-
-
-# import featuretools as ft
-# from torchvision.utils import save_image
 
 
 class PipelineSearch:

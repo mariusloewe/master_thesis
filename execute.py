@@ -2,12 +2,14 @@
 from pathlib import PurePath
 import logging
 
-
 # package imports
 from src.search import PipelineSearch
 from src.helper.settings import TARGETS_BINARY
-
 from src.helper.utils import _SMOTE
+
+# surpress FutureWarnings
+import warnings
+warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def main():
