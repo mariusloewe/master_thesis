@@ -9,12 +9,14 @@ from src.helper.utils import _SMOTE
 
 # surpress FutureWarnings
 import warnings
+
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 
 def main():
     logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - [%(filename)s:%(lineno)s - %(funcName)20s() ] - %(message)s"
+        level=logging.INFO,
+        format="%(asctime)s - [%(filename)s:%(lineno)s - %(funcName)20s() ] - %(message)s",
     )
     logging.info("Start the run!")
     results_filepath = PurePath("results")  # TODO: Define the input/output paths
