@@ -322,7 +322,7 @@ class PipelineSearch:
             "model_class": model_class,
             "params": gscv.best_params_,
         }
-        json.dump(output_dict, open("results/first_dt.json", "w"), indent=4)
+        json.dump(output_dict, open(self.results_filepath.joinpath("first_dt.json"), "w"), indent=4)
 
         print("best estimator is: {}".format(gscv.best_estimator_))
         print("best score are: {}".format(gscv.best_score_))

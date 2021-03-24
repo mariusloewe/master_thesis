@@ -13,3 +13,4 @@
 
 # ignore all pycaches
 src/__pycache__/*
+src/helper/__pycache__/*
