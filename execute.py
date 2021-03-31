@@ -22,7 +22,7 @@ def main():
     results_filepath = PurePath("results")  # TODO: Define the input/output paths
     input_file_path = PurePath("input/input_file.xlsx")
     target = TARGETS_BINARY[0]
-    task_type = "Binary_Classification"
+    task_type = "classification"
     first_search = PipelineSearch(
         file_path=input_file_path,
         target=target,
@@ -30,7 +30,7 @@ def main():
         results_filepath=results_filepath,
     )
 
-    first_search.search("DTR", sampler=_SMOTE) # , PCA=None, seed=SEED
+    first_search.search("DTC", sampler=_SMOTE) # , PCA=None, seed=SEED
 
 
 if __name__ == "__main__":

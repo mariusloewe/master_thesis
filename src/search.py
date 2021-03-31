@@ -6,7 +6,6 @@ import json
 
 # project imports
 from src.helper.settings import FEATURE_LIST, SEED
-from src.helper.regression_grid import PARAMETERS, MODELS
 from src.helper.utils import df_to_csv
 
 # DS imports
@@ -305,6 +304,12 @@ class PipelineSearch:
 
         features = False
 
+        # hacky way to distinguish between regression and classification grid
+        if self.task_type == "regression":
+            from src.helper.regression_grid import PARAMETERS, MODELS
+        elif self.task_type == "classification":
+            from src.helper.classification_grid import PARAMETERS, MODELS
+
         if feature_selector is not None:
             if not callable(feature_selector):
                 raise ReferenceError(
@@ -333,6 +338,10 @@ class PipelineSearch:
         model = MODELS[model_class]
         model_instance = model()
         parameter = PARAMETERS[model_class]
+
+        possible_parameter = set(model_instance.get_params().keys())
+        not_possible_parameter = set(parameter.keys()) - possible_parameter
+        logging.info("Not functioniing parameters: {}".format(not_possible_parameter))
 
         gscv = GridSearchCV(
             estimator=model_instance,
