@@ -1,5 +1,10 @@
 class PipelineAnalysis:
-    pass
+    def __init__(self, pipeline_path):
+        self.pipeline_path = pipeline_path
+        self.raw_pipeline = self._load_pipeline()
+
+    def _load_pipeline(self):
+        pass
 
 
 # TODO: Refactor this part

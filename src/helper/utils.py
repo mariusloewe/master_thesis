@@ -278,7 +278,7 @@ def select_KBest(self, score_func=f_regression, k=10):
     print("Length of x_test: \n", len(self.x_test))
 
 
-def boruta_selection(self):
+def boruta_selection(x_train, y_train, seed):
     """Kursa, M., Rudnicki, W., “Feature, Selection
     with the Boruta Package” Journal of Statistical Software, Vol.36, Issue 11, Sep 2010"""
 
@@ -292,26 +292,27 @@ def boruta_selection(self):
         max_iter=100,
         alpha=0.05,
         verbose=2,
-        random_state=self.seed,
+        random_state=seed,
     )
 
     # find all relevant features - 5 features should be selected
-    print(self.x_train.head())
-    print(self.y_train.head())
-    selector = feat_selector.fit(np.asarray(self.x_train), np.asarray(self.y_train))
-    print("selector", selector)
-    print(selector.support_)
-    print(selector.ranking_)
-    self.x_train = self.x_train.loc[:, feat_selector.support_].astype("float")
-    self.x_test = self.x_test.loc[:, feat_selector.support_].astype("float")
+    #    print(self.x_train.head())
+    #    print(self.y_train.head())
+    selector = feat_selector.fit(np.asarray(x_train), np.asarray(y_train))
+    #    print("selector", selector)
+    #   print(selector.support_)
+    #   print(selector.ranking_)
+    #    self.x_train = self.x_train.loc[:, feat_selector.support_].astype("float")
+    #   self.x_test = self.x_test.loc[:, feat_selector.support_].astype("float")
 
     # self.features[target] = self.y_train['Response']
-    print("New DF Shape: ", self.x_train.shape)
+    #    print("New DF Shape: ", self.x_train.shape)
     # print(self.x_train)
     # self.x_train = self.features
-    print("New DataFrame Columns:\n", self.x_train.columns)
+    #    print("New DataFrame Columns:\n", self.x_train.columns)
     # print('Length of new_df: \n', len(self.x_train))
-    print(self.x_train.dtypes)
+    #   print(self.x_train.dtypes)
+    return selector.support_
 
 
 def _ADABoost(self):

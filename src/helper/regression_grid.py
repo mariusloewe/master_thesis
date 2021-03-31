@@ -41,11 +41,11 @@ MODELS = {
 }
 
 
-SELECTION = [
-    PCA(n_components=3),
-    PCA(n_components=5),
-    RFE(SVR(kernel="linear"), 9, step=1),
-]
+SELECTION = {
+    "RFE": RFE(SVR(kernel="linear"), 9, step=1),
+    "PCA_9": PCA(n_components=9),
+    "PCA_5": PCA(n_components=5),
+}
 
 
 PARAMETERS = {

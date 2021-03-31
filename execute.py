@@ -30,7 +30,7 @@ def main():
         results_filepath=results_filepath,
     )
 
-    first_search.search("DTR", sampler=_SMOTE)
+    first_search.search("DTR", sampler=_SMOTE) # , PCA=None, seed=SEED
 
 
 if __name__ == "__main__":

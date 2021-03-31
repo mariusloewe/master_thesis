@@ -293,7 +293,29 @@ class PipelineSearch:
             )
         )
 
-    def _GSCV_REG(self, model_class, sampler: callable, scoring_function, n_jobs, pca=None):
+    def _GSCV_REG(
+        self,
+        model_class,
+        sampler: callable,
+        scoring_function,
+        n_jobs,
+        feature_selector=None,
+        pca=None,
+    ):
+
+        features = False
+
+        if feature_selector is not None:
+            if not callable(feature_selector):
+                raise ReferenceError(
+                    "Feature Selector {} is not a callable.".format(feature_selector)
+                )
+            else:
+                features = feature_selector(
+                    self.x_train_scaled, self.y_train_scaled, self.seed
+                )
+                self.x_train_scaled = self.x_test_scaled.loc[:, features]
+                self.y_train_scaled = self.y_test_scaled.loc[:, features]
 
         if sampler is not None:
             X_train_sampled, y_train_sampled = sampler(
@@ -301,6 +323,12 @@ class PipelineSearch:
             )
         else:
             X_train_sampled, y_train_sampled = self.x_train_scaled, self.y_train_scaled
+
+        if pca is not None:
+            # assumption is, that the PCA object got instantiated already
+            X_train_sampled, y_train_sampled = pca.fit_transform(
+                x=np.array(X_train_sampled), y=np.array(y_train_sampled)
+            )
 
         model = MODELS[model_class]
         model_instance = model()
@@ -316,13 +344,16 @@ class PipelineSearch:
         )
         gscv.fit(X_train_sampled, y_train_sampled)
 
-        print(gscv.cv_results_)
+        logging.info("GSCV Results:", gscv.cv_results_)
+
         output_dict = {
-            "PCA": pca,
+            "PCA": str(pca),
+            "feature_selector": str(feature_selector),
             "sampler": str(sampler),
             "model_class": model_class,
             "params": gscv.best_params_,
-            "seed": self.seed
+            "seed": self.seed,
+            "features": features if features else "ALL",
         }
         output_file_name = str(model_class) + "_" + str(self.target) + ".json"
         json.dump(
@@ -330,12 +361,8 @@ class PipelineSearch:
             open(self.results_filepath.joinpath(output_file_name), "w"),
             indent=4,
         )
-
-        print("best estimator is: {}".format(gscv.best_estimator_))
-        print("best score are: {}".format(gscv.best_score_))
-        print("best parameters are: {}".format(gscv.best_params_))
+        logging.info("best estimator is: {}".format(gscv.best_estimator_))
+        logging.info("best score are: {}".format(gscv.best_score_))
+        logging.info("best parameters are: {}".format(gscv.best_params_))
 
         best_estimator = gscv.best_estimator_
-
-
-
