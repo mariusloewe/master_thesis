@@ -22,7 +22,7 @@ def main():
     results_filepath = PurePath("results")  # TODO: Define the input/output paths
     input_file_path = PurePath("input/input_file.xlsx")
     target = TARGETS_BINARY[0]
-    task_type = "classification"
+    task_type = "regression"
     first_search = PipelineSearch(
         file_path=input_file_path,
         target=target,
