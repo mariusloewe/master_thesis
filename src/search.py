@@ -11,6 +11,7 @@ from src.helper.utils import df_to_csv
 # DS imports
 import pandas as pd
 import numpy as np
+import datetime
 from datetime import date
 
 # sklearn imports
@@ -44,7 +45,7 @@ class PipelineSearch:
         self.y_test_scaled = None
 
         # Fill above defined attributes
-        self._preprocessing()
+        self._preprocessing
         self._split_data()
 
     def search(
@@ -121,6 +122,7 @@ class PipelineSearch:
             )
             return False
 
+    @property
     def _preprocessing(self):
         """
         This internal function contains as a wrapper for the preprocessing steps, which are:
@@ -132,13 +134,13 @@ class PipelineSearch:
 
         # TODO: Implement ref date "Date of Dx"-"DoB"
         # Also, think about reproducability - at least I would have the date fixed
-        def calculate_age(born, ref_date=None):
+        def calculate_age(born, ref_date='2019-09-14'):
             """
             Helper Function to calculate the age.
             """
             born = pd.to_datetime(born)
             today = (
-                pd.to_datetime(ref_date)
+                datetime.strptime(ref_date,'%Y-%m-%d')
                 if ref_date is not None
                 else pd.to_datetime("today")
             )
@@ -152,81 +154,41 @@ class PipelineSearch:
         if self._load_processed_date(directory, file_name):
             return
 
-        num_valid_entries = 175
-        self.processed_data = self.raw_data[0:num_valid_entries].copy()
+        #calulate the age from the DoB
+        self.processed_data['age'] = self.processed_data['DoB'].apply(calculate_age)
+        self.processed_data = self.processed_data.drop(['DoB'], axis=1)
 
-        # TODO: Marius validate this part, it seems very odd to me how you remove nan's
-        # filter out all not SOMA patients
-        temp = self.processed_data.loc[
-            self.processed_data["SOMA            1=Y 0=N"] == 0
-        ]
-        # replace all nans with 0
-        temp = temp.replace(np.nan, 0)
-        self.processed_data = self.processed_data.loc[
-            self.processed_data["SOMA            1=Y 0=N"] == 1
-        ]
-        self.processed_data = self.processed_data.append(temp)
-        self.processed_data = self.processed_data.dropna()
+        #encode Gender
+        self.processed_data.processed_data.Gender = self.processed_data.Gender.str.rstrip()
+        self.processed_data['Gender'] = self.processed_data['Gender'].replace({'M': '0', 'F': '1'})
 
-        self.processed_data["Gender"] = self.processed_data["Gender"].apply(
-            lambda x: str(x).lower().strip()
-        )
-        self.processed_data["Primary Tumour"] = self.processed_data[
-            "Primary Tumour"
-        ].apply(lambda x: str(x).lower().strip())
-        self.processed_data["First Met Organ Site"] = self.processed_data[
-            "First Met Organ Site"
-        ].apply(lambda x: str(x).lower().strip())
+        #strip spacings and lower case for uniform categoricals
+        self.processed_data['Primary Tumour'] = self.processed_data['Primary Tumour'].str.lower().str.rstrip()
+        self.processed_data['First Met Organ Site'] = self.processed_data['First Met Organ Site'].str.lower().str.rstrip()
 
-        # one hot encode categorical columns
-        # TODO: One hot encode after selection
-        self.processed_data = pd.concat(
-            [
-                self.processed_data,
-                pd.get_dummies(
-                    self.processed_data["Primary Tumour"], prefix="Primary Tumour"
-                ),
-            ],
-            axis=1,
-        )
-        self.processed_data = pd.concat(
-            [
-                self.processed_data,
-                pd.get_dummies(self.processed_data["Gender"], prefix="Gender"),
-            ],
-            axis=1,
-        )
-        self.processed_data = pd.concat(
-            [
-                self.processed_data,
-                pd.get_dummies(
-                    self.processed_data["First Met Organ Site"],
-                    prefix="First Met Organ Site",
-                ),
-            ],
-            axis=1,
-        )
-        logging.info(
-            "After one-hot-encoding following columns are present {}".format(
-                self.processed_data.columns.values
-            )
-        )
+        # fill NAN where possible and sensible
+        self.processed_data['SOMA > 1st OM  0=N 1=Y'] = self.processed_data['SOMA > 1st OM  0=N 1=Y'].replace(('NA ', '0')).fillna(0)
+        self.processed_data['N of targets    I SOMA'] = self.processed_data['N of targets    I SOMA'].fillna(0).astype('int32')
+        self.processed_data['Largest single SOMA burden'] = self.processed_data['Largest single SOMA burden'].fillna(0).astype('int32')
+        self.processed_data['Tumour burden         I SOMA'] = self.processed_data['Tumour burden         I SOMA'].fillna(0).astype('int32')
 
-        # get the current age of patients
-        self.processed_data["age"] = self.processed_data["DoB"].apply(calculate_age)
+        #ToDo: check logig if they are usable by any means
+        # remove unusable columns
 
-        # dropping the columns - why do we drop gender_m?
-        self.processed_data = self.processed_data.drop(
-            columns=[
-                "DoB",
-                "Gender",
-                "Primary Tumour",
-                "First Met Organ Site",
-            ]
-        )
+        self.processed_data = self.processed_data.drop([
+            'Interval between ablations',
+               'Min %Δ Tumour burden',
+               'Max %Δ Tumour burden',
+               'Mean %Δ Tumour burden',
+               'Min SOMA interval',
+               'Max SOMA Interval',
+               'Average SOMA Interval'
+               ], axis=1)
 
-        # Remove rows with NaN values
-        self.processed_data = self.processed_data.dropna()
+        # Encode categorical features to dummy variables
+        self.processed_data = pd.get_dummies(data=self.processed_data,columns=['Primary Tumour', 'First Met Organ Site','Same organ (0:Y 1:N 2:Both)'])
+
+
         logging.info(
             "Dataframe after preprocessing has shape {}. {} Patients were removed from dataset.".format(
                 self.processed_data.shape,
