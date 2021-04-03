@@ -38,7 +38,7 @@ FEATURE_LIST = [
     #'SOMA > 1st OM  0=N 1=Y',
     "DFS months between repeat Tx",
     "Highest SUVmax at 1st Tx",
-    "N. of  target organs at 1st Tx"
+    "N. of  target organs at 1st Tx",
      'N of targets    I SOMA',
      'Interval between ablations',
      'Δ Tumour burden	Min Burden',
@@ -55,7 +55,8 @@ FEATURE_LIST = [
      'Cumulative Tumour burden',
      'Largest single SOMA burden',
      'Highest SUVmax ever',
-     'N. of  target organs involved in total',
+     #N. of  target organs at 1st Tx
+'N. of  target organs involved in total',
      'Repeat TX',
      'Total number of targets',
      'Total SOMA lesions'
