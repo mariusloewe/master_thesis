@@ -59,6 +59,20 @@ def calc_correlations(
     df_corr.to_csv(file_path.joinpath(file_name))
 
 
+# helper function to calculate the age of a person
+def calculate_age(born, ref_date='2019-09-14'):
+    """
+    Helper Function to calculate the age.
+    """
+    born = pd.to_datetime(born)
+    today = (
+        datetime.strptime(ref_date, '%Y-%m-%d')
+        if ref_date is not None
+        else pd.to_datetime("today")
+    )
+    return (today - born) / np.timedelta64(1, "Y")
+
+
 def binning(df, col, bins=None, labels=None, verbose=False):
     """
     Bins a given column from a dataframe

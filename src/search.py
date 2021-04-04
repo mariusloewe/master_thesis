@@ -11,7 +11,7 @@ from src.helper.utils import df_to_csv
 # DS imports
 import pandas as pd
 import numpy as np
-import datetime
+from datetime import datetime
 from datetime import date
 
 # sklearn imports
@@ -132,20 +132,6 @@ class PipelineSearch:
         iv.) Sets the result as self.processed_date and dumps it on disk.
         """
 
-        # TODO: Implement ref date "Date of Dx"-"DoB"
-        # Also, think about reproducability - at least I would have the date fixed
-        def calculate_age(born, ref_date='2019-09-14'):
-            """
-            Helper Function to calculate the age.
-            """
-            born = pd.to_datetime(born)
-            today = (
-                datetime.strptime(ref_date,'%Y-%m-%d')
-                if ref_date is not None
-                else pd.to_datetime("today")
-            )
-            return (today - born) / np.timedelta64(1, "Y")
-
         # first check if the file already exists
         file_name = "preprocessed_data_{}_target.csv".format(self.target)
         directory = PurePath("input").joinpath("processed_data")
@@ -154,13 +140,27 @@ class PipelineSearch:
         if self._load_processed_date(directory, file_name):
             return
 
+        self.processed_data = self.raw_data.copy()
+
+        def calculate_age(born, ref_date='2019-09-14'):
+            """
+            Helper Function to calculate the age.
+            """
+            born = pd.to_datetime(born)
+            today = (
+                datetime.strptime(ref_date, '%Y-%m-%d')
+                if ref_date is not None
+                else pd.to_datetime("today")
+            )
+            return (today - born) / np.timedelta64(1, "Y")
+
         #calulate the age from the DoB
         self.processed_data['age'] = self.processed_data['DoB'].apply(calculate_age)
         self.processed_data = self.processed_data.drop(['DoB'], axis=1)
 
         #encode Gender
-        self.processed_data.processed_data.Gender = self.processed_data.Gender.str.rstrip()
-        self.processed_data['Gender'] = self.processed_data['Gender'].replace({'M': '0', 'F': '1'})
+        self.processed_data.Gender = self.processed_data.Gender.str.rstrip()
+        self.processed_data['Gender'] = self.processed_data['Gender'].replace({'M': '0', 'F': '1'}).astype('int32')
 
         #strip spacings and lower case for uniform categoricals
         self.processed_data['Primary Tumour'] = self.processed_data['Primary Tumour'].str.lower().str.rstrip()
@@ -172,7 +172,7 @@ class PipelineSearch:
         self.processed_data['Largest single SOMA burden'] = self.processed_data['Largest single SOMA burden'].fillna(0).astype('int32')
         self.processed_data['Tumour burden         I SOMA'] = self.processed_data['Tumour burden         I SOMA'].fillna(0).astype('int32')
 
-        #ToDo: check logig if they are usable by any means
+        #ToDo: check logic if they are usable by any means
         # remove unusable columns
 
         self.processed_data = self.processed_data.drop([
@@ -185,14 +185,15 @@ class PipelineSearch:
                'Average SOMA Interval'
                ], axis=1)
 
+
+
         # Encode categorical features to dummy variables
         self.processed_data = pd.get_dummies(data=self.processed_data,columns=['Primary Tumour', 'First Met Organ Site','Same organ (0:Y 1:N 2:Both)'])
-
-
+        d = list(self.processed_data.select_dtypes(['object']).columns)
+        print(d)
         logging.info(
             "Dataframe after preprocessing has shape {}. {} Patients were removed from dataset.".format(
-                self.processed_data.shape,
-                (num_valid_entries - self.processed_data.shape[0]),
+                self.processed_data.shape, self.processed_data.isnull().sum(axis=0).sum()
             )
         )
 
@@ -309,7 +310,7 @@ class PipelineSearch:
             estimator=model_instance,
             param_grid=parameter,
             cv=5,
-            scoring=make_scorer(scoring_function),
+            scoring=scoring_function,
             n_jobs=n_jobs,
             verbose=0,
         )
@@ -333,6 +334,7 @@ class PipelineSearch:
             indent=4,
         )
         logging.info("best estimator is: {}".format(gscv.best_estimator_))
+        logging.info("best training acc. is: {}".format(gscv.best_estimator_.score(X_train_sampled, y_train_sampled)))
         logging.info("best score are: {}".format(gscv.best_score_))
         logging.info("best parameters are: {}".format(gscv.best_params_))
 
