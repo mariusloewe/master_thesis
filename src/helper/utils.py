@@ -22,7 +22,9 @@ from imblearn.combine import SMOTETomek, SMOTEENN
 # feature selectors
 from boruta import BorutaPy
 from sklearn.feature_selection import SelectKBest
-from sklearn.feature_selection import f_regression
+from sklearn.feature_selection import f_regression, RFE
+from sklearn.tree import DecisionTreeClassifier
+
 from sklearn.feature_selection import chi2
 
 # models
@@ -108,6 +110,19 @@ def df_to_csv(df, directory, file_name):
         pass
     df.to_csv(file_path)
     logging.info("{} was dumped on disc.".format(file_path))
+
+def _RFE(X,y,no_features = 10):
+    '''
+
+    :param X: input test data
+    :param y: input test data target
+    :param no_features: number of features to select
+    :return: list of features selected
+    '''
+    selector = RFE(estimator=DecisionTreeClassifier(), n_features_to_select=no_features)
+    X = selector.fit(X,y)
+    features = list(X.support_)
+    return features
 
 
 # Sampling Methods
@@ -347,3 +362,17 @@ def _ADABoost(self):
     errors = abs(predictions - self.y_test)
     # Print out the mean absolute error (mae)
     print("Mean Absolute Error:", round(np.mean(errors), 2))
+
+
+def scale_floats(df):
+    # hacky way to get all columns that contain only floats
+    tmp_cols = [key for key, value in df.dtypes.items() if value.kind is "f"]
+    tmp_df = df[tmp_cols]
+    scaler = MinMaxScaler()
+    df[tmp_cols] = scaler.fit_transform(tmp_df)
+    return df
+
+
+def scale_y(s):
+    scaler = MinMaxScaler()
+    return scaler.fit_transform(s)

@@ -3,7 +3,7 @@ This file serves to create the grid-search's grid of classification tasks.
 """
 # project imports
 from src.helper.settings import SEED
-from src.helper.utils import _SMOTE, _SMOTETomek, _SMOTE_Border, _SMOTE_SVM
+from src.helper.utils import _SMOTE, _SMOTETomek, _SMOTE_Border, _SMOTE_SVM, _RFE
 
 # sklearn feature selection
 from sklearn.feature_selection import RFE
@@ -26,16 +26,16 @@ from gplearn.genetic import SymbolicClassifier
 
 
 SELECTION = {
-    "RFE": RFE(SVR(kernel="linear"), 9, step=1),
+    "RFE": _RFE,
     "PCA_9": PCA(n_components=9),
     "PCA_5": PCA(n_components=5),
 }
 
 OVERSAMPLING = {
-    "SVMSMOTE": _SMOTE_SVM,
     "SMOTETomek": _SMOTETomek,
     "SMOTE": _SMOTE,
     "BorderlineSMOTE": _SMOTE_Border,
+    "SVMSMOTE": _SMOTE_SVM,
 }
 
 MODELS = {
@@ -91,12 +91,12 @@ PARAMETERS = {
         "random_state": [SEED],
     },
     "ABC": {
-        "learning_rate": [1, 0.8, 0.6, 1.2],
+        "learning_rate": [1, 0.8, 0.6, 1.2, 0.1, 0.01],
         "random_state": [SEED],
         "n_estimators": [50, 20, 80, 60, 40],
     },
     "XGB": {
-        "learning_rate": [1, 0.8, 0.6, 1.2],
+        "learning_rate": [1, 0.6, 0.4,  0.2, 0.1, 0.01],
         "random_state": [SEED],
         "n_estimators": [50, 20, 100, 200],
         "max_depth": [5, 3, 10],
@@ -104,7 +104,7 @@ PARAMETERS = {
         "subsample": [0.8, 0.5, 0.9],
         "min_child_weight": [1, 2, 5],
     },
-    "RFClassifier": {
+    "RandomForestClassifier": {
         "bootstrap": [True],
         "max_depth": [2, 3, 4, 6],
         "max_features": [2, 3],
@@ -115,7 +115,6 @@ PARAMETERS = {
     },
     "KNC": {
         "weights": ["distance"],  #'uniform',
-        "random_state": [SEED],
         "n_neighbors": [5, 2, 3, 7],
         "algorithm": ["auto", "ball_tree", "kd_tree"],
         "n_jobs": [5],
@@ -129,16 +128,16 @@ PARAMETERS = {
         "p_hoist_mutation": [0.05, 0.1],
         "p_point_mutation": [0.1, 0.2],
         "max_samples": [0.9],
-        "verbose": [1],
+        "verbose": [0],
         "parsimony_coefficient": [0.01, 0.1],
         "random_state": [SEED],
     },
     "LR": {
         "penalty": ["l1", "l2"],
         "random_state": [SEED],
-        "solver": ["liblinear", "saga"],
+        "solver": ["liblinear", "saga", 'newton-cg'],
         "multi_class": ["ovr", "auto"],
-        "C": [0.5, 0.8, 0.7, 0.9],
+        "C": [0.5, 0.8, 0.7, 0.9, 0.2, 0.3],
         "max_iter": [80, 100, 200],
     },
     "DTR": {

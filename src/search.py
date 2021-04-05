@@ -22,7 +22,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 class PipelineSearch:
     def __init__(
-        self, file_path, target, task_type, results_filepath, test_size=0.30, seed=None
+        self, file_path, target, task_type, results_filepath, test_size=0.30, seed=None, no_features_selected=10,
     ):
 
         self.target = target
@@ -31,6 +31,7 @@ class PipelineSearch:
         self.results_filepath = results_filepath
         self.seed = seed if seed is not None else SEED
         self.test_size = test_size
+        self.no_features_selected = no_features_selected
         ##PRE-PROCESS
         self.processed_data = None
         ##SPLIT
@@ -45,11 +46,11 @@ class PipelineSearch:
         self.y_test_scaled = None
 
         # Fill above defined attributes
-        self._preprocessing
+        self._preprocessing()
         self._split_data()
 
     def search(
-        self, model_class, sampler=None, scoring_function=mean_squared_error, n_jobs=3
+        self, model_class, sampler=None, feature_selector=None, scoring_function = mean_squared_error, n_jobs=3
     ):
         """
         Public Function that carries out the Pipeline Search.
@@ -58,6 +59,7 @@ class PipelineSearch:
             model_class,
             sampler=sampler,
             scoring_function=scoring_function,
+            feature_selector=feature_selector,
             n_jobs=n_jobs,
         )
 
@@ -122,7 +124,7 @@ class PipelineSearch:
             )
             return False
 
-    @property
+
     def _preprocessing(self):
         """
         This internal function contains as a wrapper for the preprocessing steps, which are:
@@ -172,7 +174,7 @@ class PipelineSearch:
         self.processed_data['Largest single SOMA burden'] = self.processed_data['Largest single SOMA burden'].fillna(0).astype('int32')
         self.processed_data['Tumour burden         I SOMA'] = self.processed_data['Tumour burden         I SOMA'].fillna(0).astype('int32')
 
-        #ToDo: check logic if they are usable by any means
+        #ToDo: Marius check logic if they are usable by any means, probably, yes
         # remove unusable columns
 
         self.processed_data = self.processed_data.drop([
@@ -182,15 +184,14 @@ class PipelineSearch:
                'Mean %Δ Tumour burden',
                'Min SOMA interval',
                'Max SOMA Interval',
-               'Average SOMA Interval'
+               'Average SOMA Interval',
                ], axis=1)
 
 
 
         # Encode categorical features to dummy variables
         self.processed_data = pd.get_dummies(data=self.processed_data,columns=['Primary Tumour', 'First Met Organ Site','Same organ (0:Y 1:N 2:Both)'])
-        d = list(self.processed_data.select_dtypes(['object']).columns)
-        print(d)
+
         logging.info(
             "Dataframe after preprocessing has shape {}. {} Patients were removed from dataset.".format(
                 self.processed_data.shape, self.processed_data.isnull().sum(axis=0).sum()
@@ -210,7 +211,7 @@ class PipelineSearch:
             X_, y_, test_size=self.test_size, random_state=self.seed
         )
         if scaled:
-            self._scale_split_date()
+            self._scale_split_data()
 
         logging.info("after split shape, x: {}".format(self.x_train.shape))
         logging.info("after split cols: {}".format(self.x_train.columns))
@@ -220,7 +221,7 @@ class PipelineSearch:
         )
         logging.info("after split y dtypes: {}".format(self.y_train.dtypes))
 
-    def _scale_split_date(self):
+    def _scale_split_data(self):
         """
         MinMaxScales the data.
         """
@@ -261,7 +262,7 @@ class PipelineSearch:
         sampler: callable,
         scoring_function,
         n_jobs,
-        feature_selector=None,
+        feature_selector: callable,
         pca=None,
     ):
 
@@ -270,6 +271,7 @@ class PipelineSearch:
         # hacky way to distinguish between regression and classification grid
         if self.task_type == "regression":
             from src.helper.regression_grid import PARAMETERS, MODELS
+
         elif self.task_type == "classification":
             from src.helper.classification_grid import PARAMETERS, MODELS
 
@@ -280,10 +282,13 @@ class PipelineSearch:
                 )
             else:
                 features = feature_selector(
-                    self.x_train_scaled, self.y_train_scaled, self.seed
+                    self.x_train_scaled, self.y_train_scaled, self.no_features_selected
                 )
-                self.x_train_scaled = self.x_test_scaled.loc[:, features]
-                self.y_train_scaled = self.y_test_scaled.loc[:, features]
+                self.x_train_scaled = self.x_train_scaled.loc[:, features]
+                self.x_test_scaled = self.x_test_scaled.loc[:, features]
+
+                feature_names = list(self.x_train_scaled.columns)
+                logging.info("after feature_selection shape, x: {}".format(self.x_train_scaled.shape))
 
         if sampler is not None:
             X_train_sampled, y_train_sampled = sampler(
@@ -325,9 +330,9 @@ class PipelineSearch:
             "model_class": model_class,
             "params": gscv.best_params_,
             "seed": self.seed,
-            "features": features if features else "ALL",
+            "features": feature_names if feature_names else "ALL",
         }
-        output_file_name = str(model_class) + "_" + str(self.target) + ".json"
+        output_file_name = str(self.target) + "_" + str(model_class) + ".json"
         json.dump(
             output_dict,
             open(self.results_filepath.joinpath(output_file_name), "w"),
